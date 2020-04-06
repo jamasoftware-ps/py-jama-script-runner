@@ -1,6 +1,7 @@
+import multiprocessing
 import time
 
-import py_jama_script_runner as pjsr
+import app.py_jama_script_runner as pjsr
 
 # The list of custom widgets we want for our customized script runner app
 custom_widgets = {
@@ -16,14 +17,21 @@ custom_widgets = {
         "type": pjsr.RADIO_BUTTON_FIELD_WIDGET,
         "label": "Mapping Version:",
         "options": ["A", "B", "C", "D"]
+    },
+    "output_location": {
+        "type": pjsr.DIRECTORY_CHOOSER_FIELD_WIDGET,
+        "label": "Output Directory:"
     }
 }
 
 
 class CustomizedApp:
     def __init__(self):
+        # Setup the GUI with the needed widgets and run method.
         self.app = pjsr.PyJamaScriptRunner(custom_widgets, self.run)
+        # Start the GUI:
         self.app.mainloop()
+        # NO MORE CODE BELOW HERE:  mainloop will not return until after the program exits. ###
 
     def run(self, **kwargs):
         """
@@ -77,4 +85,6 @@ class CustomizedApp:
 
 
 if __name__ == "__main__":
+    # Pyinstaller fix
+    multiprocessing.freeze_support()
     app = CustomizedApp()

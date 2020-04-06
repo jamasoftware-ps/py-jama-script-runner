@@ -1,7 +1,10 @@
 # Python standard libs
+import os
+import sys
 import threading
 import queue
 import logging
+import configparser
 
 # External Library imports
 import tkinter as tk
@@ -9,7 +12,7 @@ from tkinter import ttk
 import tkinter.constants as tkc
 from tkinter import Text
 from tkinter import messagebox
-from PIL import Image, ImageTk
+from tkinter import filedialog
 
 # Get the Jama Client library
 from py_jama_rest_client.client import JamaClient
@@ -24,6 +27,7 @@ import app_constants as const
 # Custom Widget types
 STRING_FIELD_WIDGET = "STRING_FIELD_WIDGET"
 RADIO_BUTTON_FIELD_WIDGET = "RADIO_BUTTON_FIELD_WIDGET"
+DIRECTORY_CHOOSER_FIELD_WIDGET = "DIRECTORY_CHOOSER_FIELD_WIDGET"
 
 
 ########################################################################################################################
@@ -60,15 +64,13 @@ class PyJamaScriptRunner(tk.Tk):
         # Set Background Color
         self.configure(background=colors.JAMA_HILO_SILVER)
 
-        # Set Logo - Attempt to load and move on if failure
-        try:
-            logo = Image.open("logo.png").resize((263, 70))
-            rendered_logo = ImageTk.PhotoImage(logo)
-            self.logo_label = tk.Label(self, image=rendered_logo, bg=colors.JAMA_HILO_SILVER)
-            self.logo_label.image = rendered_logo
-            self.logo_label.pack(fill=tkc.X)
-        except FileNotFoundError:
-            pass
+        # Build a Menu bar
+        self.menubar = tk.Menu(self)
+        self.file_menu = tk.Menu(self.menubar, tearoff=0)
+        self.file_menu.add_command(label="Load settings", command=self.load_settings)
+        self.file_menu.add_command(label="Save settings", command=self.save_settings)
+        self.menubar.add_cascade(label="File", menu=self.file_menu)
+        self.config(menu=self.menubar)
 
         # Setup client connection settings frame
         self.client_panel = ClientSettingsPanel(self)
@@ -91,6 +93,68 @@ class PyJamaScriptRunner(tk.Tk):
         self.results_panel.pack(fill=tkc.BOTH, expand=1)
         self.status_frame.pack(side=tkc.BOTTOM, fill=tkc.X)
         self.execute_panel.pack(side=tkc.BOTTOM, fill=tkc.X)
+
+        # attempt to load existing settings.iml file
+        self.default_settings_file = 'settings.ini'
+
+        # determine if application is a script file or frozen exe
+        self.application_path = ""
+        if getattr(sys, 'frozen', False):
+            self.application_path = '/'.join(os.path.dirname(sys.argv[0]).split('/')[:-3])
+        elif __file__:
+            self.application_path = '/'.join(os.path.dirname(__file__).split('/')[:-1])
+
+        config_path = os.path.join(self.application_path, self.default_settings_file)
+        self.load_file(config_path)
+
+    def save_settings(self):
+        save_location = filedialog.asksaveasfilename(initialdir=self.application_path,
+                                                     initialfile=self.default_settings_file,
+                                                     title="Select save file",
+                                                     filetypes=(("Config files", "*.ini"), ("all files", "*")),
+                                                     defaultextension=".ini")
+
+        config = configparser.ConfigParser()
+        config['CLIENT'] = {
+            'jama_url': self.client_panel.url_field.get_value(),
+            'oauth': str(self.client_panel.auth_mode_field.auth_mode.get()),
+            'user_id': self.client_panel.username_field.get_value(),
+            # Uncomment the following line to allow the saving of password fields
+            # 'secret': self.client_panel.password_field.get_value()
+        }
+        config['CUSTOM_FIELDS'] = {}
+        for field in self.custom_fields.keys():
+            config['CUSTOM_FIELDS'][field] = str(self.custom_fields.get(field).get_value())
+
+        with open(save_location, 'w') as config_file:
+            config.write(config_file)
+
+    def load_settings(self):
+        file_to_load = filedialog.askopenfilename(initialdir=self.application_path,
+                                                  initialfile=self.default_settings_file,
+                                                  title="Select save file",
+                                                  filetypes=(("Config files", "*.ini"), ("all files", "*")),
+                                                  defaultextension=".ini")
+        if file_to_load != '':
+            self.load_file(file_to_load)
+
+    def load_file(self, file_to_load):
+        config = configparser.ConfigParser()
+        config.read(file_to_load)
+
+        # Load client settings
+        self.client_panel.url_field.set_value(config.get("CLIENT", "jama_url"))
+        self.client_panel.auth_mode_field.auth_mode.set(int(config.get("CLIENT", "oauth")))
+        self.client_panel.username_field.set_value(config.get("CLIENT", "user_id"))
+        try:
+            self.client_panel.password_field.set_value(config.get("CLIENT", "secret"))
+        except configparser.NoOptionError:
+            pass
+
+        # Load custom settings
+        for option in config.options("CUSTOM_FIELDS"):
+            if option in self.custom_fields:
+                self.custom_fields.get(option).set_value(config.get("CUSTOM_FIELDS", option))
 
     def execute_button_command(self):
         """This function should start a thread to do the work of the custom script. The script can pass back messages
@@ -178,6 +242,7 @@ class PyJamaScriptRunner(tk.Tk):
 
     def set_status_message(self, msg):
         self.status.set(msg)
+        self.message_queue.put("\n")
 
     def update_progress(self, progress):
         """
@@ -280,6 +345,8 @@ class ScriptSettingsPanel(tk.LabelFrame):
                 field_type = field_config.get('type')
                 if field_type == STRING_FIELD_WIDGET:
                     field_widget = cw.StringFieldWidget(self, field_label)
+                elif field_type == DIRECTORY_CHOOSER_FIELD_WIDGET:
+                    field_widget = cw.DirectoryChooserFieldWidget(self, field_label)
                 elif field_type == RADIO_BUTTON_FIELD_WIDGET:
                     options = field_config.get('options')
                     radio_button_widget = cw.RadioButtonFieldWidget(self, field_label, options)
@@ -408,8 +475,3 @@ class AuthModeSelector(tk.Frame):
         else:
             self.parent.username_field.label_string_var.set(const.CLIENT_ID)
             self.parent.password_field.label_string_var.set(const.CLIENT_SECRET)
-
-
-if __name__ == "__main__":
-    app = PyJamaScriptRunner({}, lambda **kwargs: print("Hello"))
-    app.mainloop()

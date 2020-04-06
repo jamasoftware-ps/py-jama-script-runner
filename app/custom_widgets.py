@@ -1,6 +1,7 @@
 import tkinter as tk
-from tkinter import ttk, IntVar
+from tkinter import ttk
 import tkinter.constants as tkc
+from tkinter import filedialog
 
 import colors
 
@@ -28,7 +29,7 @@ class FieldWidget(tk.Frame):
                                textvariable=self.label_string_var,
                                width=20,
                                anchor=tkc.E,
-                               background=colors.JAMA_MOONSHOT_GOLD)
+                               background=colors.JAMA_HILO_SILVER)
 
         # Pack the Frame
         self.label.pack(side=tkc.LEFT)
@@ -70,6 +71,25 @@ class StringFieldWidget(FieldWidget):
         self.value.set(string_value)
 
 
+class DirectoryChooserFieldWidget(StringFieldWidget):
+    """
+    This class represents a directory chooser field
+    """
+
+    def __init__(self, master, label_text):
+        # Init parent
+        StringFieldWidget.__init__(self, master, label_text)
+
+        # Add a button that calls a file chooser and sets the result to the field value
+        self.dir_chooser_button = ttk.Button(self, text="Select", command=self.choose_file)
+
+        # Pack it
+        self.dir_chooser_button.pack(side=tkc.LEFT)
+
+    def choose_file(self):
+        self.set_value(filedialog.askdirectory())
+
+
 class RadioButtonFieldWidget(FieldWidget):
     """
     This Class will create a group of radio buttons for the form
@@ -99,5 +119,9 @@ class RadioButtonFieldWidget(FieldWidget):
     def get_value(self):
         return self.value.get()
 
-    def set_value(self, int_value):
-        self.value.set(int_value)
+    def set_value(self, value):
+        try:
+            value = int(value)
+            self.value.set(value)
+        except ValueError:
+            pass

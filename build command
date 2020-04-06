@@ -1,0 +1,7 @@
+Mac build command to be executed from within pipenv - NOTE: this command is dependant on the location of the TK and TCL
+libraries on the build machine.
+    pyinstaller --add-binary='/System/Library/Frameworks/Tk.framework/Tk':'tk' --add-binary='/System/Library/Frameworks/Tcl.framework/Tcl':'tcl' --windowed  print_projects.py app/custom_widgets.py app/colors.py app/app_constants.py app/py_jama_script_runner.py
+
+
+Windows Build Command:
+    pyinstaller  --windowed  print_projects.py app/custom_widgets.py app/colors.py app/app_constants.py app/py_jama_script_runner.py
