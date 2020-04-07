@@ -6,9 +6,9 @@ application.
 
 ## How to use this library
 
-The file "print_projects.py" Can be referenced as an example project.
+The file "print_projects.py" Can be referenced as an example of how to use project.
 
-1) **Define** the input parameters for your script that the user will enter through the GUI.    To def
+1) **Define** the input parameters for your script that the user will enter through the GUI.
 
     #### Custom Widgets:
     You can choose from the following type of Input widget for your fields.
@@ -27,7 +27,7 @@ The file "print_projects.py" Can be referenced as an example project.
         "mapping_version": {
             "type": py_jama_script_runner.RADIO_BUTTON_FIELD_WIDGET,
             "label": "Mapping Version:",
-            "options": ["A", "B", "C", "D"]
+            "options": ["A", "B", "C", "D"]  # you will be returned the index of the option the user chooses from this list
         },
         "output_location": {
             "type": py_jama_script_runner.DIRECTORY_CHOOSER_FIELD_WIDGET,
@@ -39,26 +39,28 @@ The file "print_projects.py" Can be referenced as an example project.
     REST Client parameters are handled for you.  You only need to define the parameters required for your scripts 
     business logic.
     
-2)
+2) Create a run function.  this is the function that will be called when the "Execute" button is clicked by the user.
+  This function should only have keyword arguments and not rely positional arguments.
 
-Begin by creating an instance of the PyJamaScriptRunner class. You must supply two parameters, the first is a 
-    dictionary object that describes which custom widgets should be applied to the custom script settings section of the
-    GUI.  The second is a function that will be executed when the execute button is clicked.  
+3) Creating an instance of the PyJamaScriptRunner class. You must supply two parameters to the constructor. \
+  The first is the dictionary object from Step 1 above that describes which custom widgets should be applied to the custom 
+  script settings section of the GUI.  The second is the run function created in Step 2 above.
 
-2) Your Run method supplied to the constructor should have no positional arguments and should accept a list of kwargs.
-    The kwargs dictionary passed to your supplied function will contain an value for each of the defined custom widgets
-    that you defined during instantiation.
+4) Call the mainloop function of the PyJamaScriptRunner class instantiated in Step 3 above to launch the GUI.  Note that
+this method does not return until the user closes the application.  you must do any setup required before calling 
+this method.
 
+### How to interact with the GUI from your script.
+There are 3 ways to update and interact with the GUI:
 
+*  Status Field: The status field allows you to inform the user what the application is currently doing.  The status 
+field is located just above the progress bar and to the far left of the execution button.
+You can use the function `set_status_message(msg)` to set the status field to the supplied msg string.  
+It is suggested to updated this when the application is entering a new phase. Please keep your status field messages 
+short(less than 50 characters is recommended.)
 
-so that you will have access to update the GUI, i.e. Message output, Status field and 
-progress bar.  
+* Results Panel: The results panel is where you can display bulk information to the user.  To add a message to the 
+results panel you can call the `emit_message(msg)` function.
 
-    You will have access to three methods that update/interact wtih the GUI.
-    * `set_status_message(msg)` Sets the status field to the supplied string.  It is suggested to updated this one the
-    application is entring a new phase
- 
-
-
-
-WIP: SORRY WE ARE STILL UNDER CONSTRUCTION....
+* Progress bar: You can inform the user of progress made by your script by updating the progress bar.
+Call the `update_progress(progress)` function.  You must supply an integer between 0 - 100 inclusive.

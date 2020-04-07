@@ -1,4 +1,3 @@
-import multiprocessing
 import time
 
 import app.py_jama_script_runner as pjsr
@@ -93,6 +92,4 @@ class CustomizedApp:
 
 
 if __name__ == "__main__":
-    # Pyinstaller fix
-    multiprocessing.freeze_support()
     app = CustomizedApp()
