@@ -81,15 +81,36 @@ class DirectoryChooserFieldWidget(StringFieldWidget):
         StringFieldWidget.__init__(self, master, label_text)
 
         # Add a button that calls a file chooser and sets the result to the field value
+        self.dir_chooser_button = ttk.Button(self, text="Select", command=self.choose_directory)
+
+        # Pack it
+        self.dir_chooser_button.pack(side=tkc.LEFT)
+
+    def choose_directory(self):
+        directory = filedialog.askdirectory()
+        if directory is not None and directory != '':
+            self.set_value(directory)
+
+
+class FileChooserFieldWidget(StringFieldWidget):
+    """
+    This class represents a File chooser field
+    """
+
+    def __init__(self, master, label_text):
+        # Init parent
+        StringFieldWidget.__init__(self, master, label_text)
+
+        # Add a button that calls a file chooser and sets the result to the field value
         self.dir_chooser_button = ttk.Button(self, text="Select", command=self.choose_file)
 
         # Pack it
         self.dir_chooser_button.pack(side=tkc.LEFT)
 
     def choose_file(self):
-        directory = filedialog.askdirectory()
-        if directory is not None and directory != '':
-            self.set_value(directory)
+        file = filedialog.askopenfilename()
+        if file is not None and file != '':
+            self.set_value(file)
 
 
 class RadioButtonFieldWidget(FieldWidget):
@@ -127,3 +148,40 @@ class RadioButtonFieldWidget(FieldWidget):
             self.value.set(value)
         except ValueError:
             pass
+
+
+class ComboBoxFieldWidget(FieldWidget):
+    """
+    Allows the user to select an option from a combobox dropdown.
+    """
+
+    def __init__(self, master, label_text, options):
+        """
+        Builds a combo box input chooser.
+        :param master: The owning component.
+        :param label_text: The Field Label
+        :return:
+        """
+        # Init the field widget
+        FieldWidget.__init__(self, master, label_text)
+        self.value = tk.StringVar()
+
+        self.combo_box = ttk.Combobox(self,
+                                      textvariable=self.value,
+                                      values=options,
+                                      background=colors.JAMA_HILO_SILVER,
+                                      width=30,
+                                      state="readonly")
+
+        self.combo_box.pack(side=tkc.LEFT)
+
+    def get_value(self):
+        return self.value.get()
+
+    def set_value(self, value):
+        try:
+            value = str(value)
+            self.value.set(value)
+        except ValueError:
+            pass
+

@@ -13,6 +13,15 @@ custom_widgets = {
         "label": "Mapping Version:",
         "options": ["A", "B", "C", "D"]
     },
+    "item_type": {
+        "type": pjsr.COMBOBOX_FIELD_WIDGET,
+        "label": "Item Type:",
+        "options": ["Component", "Folder", "Text", "Item"]
+    },
+    "input_file": {
+        "type": pjsr.FILE_CHOOSER_FIELD_WIDGET,
+        "label": "Input File:"
+    },
     "output_location": {
         "type": pjsr.DIRECTORY_CHOOSER_FIELD_WIDGET,
         "label": "Output Directory:"

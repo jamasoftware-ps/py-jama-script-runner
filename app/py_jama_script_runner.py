@@ -29,6 +29,8 @@ import app_constants as const
 STRING_FIELD_WIDGET = "STRING_FIELD_WIDGET"
 RADIO_BUTTON_FIELD_WIDGET = "RADIO_BUTTON_FIELD_WIDGET"
 DIRECTORY_CHOOSER_FIELD_WIDGET = "DIRECTORY_CHOOSER_FIELD_WIDGET"
+FILE_CHOOSER_FIELD_WIDGET = "FILE_CHOOSER_FIELD_WIDGET"
+COMBOBOX_FIELD_WIDGET = "COMBOBOX_FIELD_WIDGET"
 
 # local logger
 logger = logging.getLogger('py_jama_script_runner')
@@ -362,12 +364,16 @@ class ScriptSettingsPanel(tk.LabelFrame):
                 field_type = field_config.get('type')
                 if field_type == STRING_FIELD_WIDGET:
                     field_widget = cw.StringFieldWidget(self, field_label)
+                elif field_type == FILE_CHOOSER_FIELD_WIDGET:
+                    field_widget = cw.FileChooserFieldWidget(self, field_label)
                 elif field_type == DIRECTORY_CHOOSER_FIELD_WIDGET:
                     field_widget = cw.DirectoryChooserFieldWidget(self, field_label)
                 elif field_type == RADIO_BUTTON_FIELD_WIDGET:
                     options = field_config.get('options')
-                    radio_button_widget = cw.RadioButtonFieldWidget(self, field_label, options)
-                    field_widget = radio_button_widget
+                    field_widget = cw.RadioButtonFieldWidget(self, field_label, options)
+                elif field_type == COMBOBOX_FIELD_WIDGET:
+                    options = field_config.get('options')
+                    field_widget = cw.ComboBoxFieldWidget(self, field_label, options)
                 field_widget.pack(fill=tkc.X)
                 custom_fields[field] = field_widget
             except Exception as e:

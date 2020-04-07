@@ -19,8 +19,10 @@ The file "print_projects.py" Can be referenced as an example of how to use proje
     #### Custom Widgets:
     You can choose from the following type of Input widget for your fields.
     * String Field Widget
-    * Radio Button Widget
-    * Directory Chooser Widget
+    * Radio Button Field Widget
+    * Combobox Field Widget 
+    * File Chooser Field Widget
+    * Directory Chooser Field Widget
     * additional widget types to be added in the future such as File chooser, ComboBox, and other common form elements.
     
     This is an example custom widget dictionary declaration:
@@ -34,6 +36,15 @@ The file "print_projects.py" Can be referenced as an example of how to use proje
             "type": py_jama_script_runner.RADIO_BUTTON_FIELD_WIDGET,
             "label": "Mapping Version:",
             "options": ["A", "B", "C", "D"]  # you will be returned the index of the option the user chooses from this list
+        },
+        "item_type": {
+            "type": py_jama_script_runner.COMBOBOX_FIELD_WIDGET,
+            "label": "Item Type:",
+            "options": ["Component", "Folder", "Text", "Item"] # Returns the selected String.
+        },
+        "input_file": {
+            "type": py_jama_script_runner.FILE_CHOOSER_FIELD_WIDGET,
+            "label": "Input File:"
         },
         "output_location": {
             "type": py_jama_script_runner.DIRECTORY_CHOOSER_FIELD_WIDGET,
