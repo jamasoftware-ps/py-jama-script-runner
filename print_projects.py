@@ -9,10 +9,6 @@ custom_widgets = {
         "type": pjsr.STRING_FIELD_WIDGET,
         "label": "Project ID:"
     },
-    "baseline_name": {
-        "type": pjsr.STRING_FIELD_WIDGET,
-        "label": "Baseline Name:"
-    },
     "mapping_version": {
         "type": pjsr.RADIO_BUTTON_FIELD_WIDGET,
         "label": "Mapping Version:",
@@ -31,7 +27,7 @@ class CustomizedApp:
         self.app = pjsr.PyJamaScriptRunner(custom_widgets, self.run)
         # Start the GUI:
         self.app.mainloop()
-        # NO MORE CODE BELOW HERE:  mainloop will not return until after the program exits. ###
+        # NO MORE CODE BELOW HERE:  mainloop will not return until after the program exits.
 
     def run(self, **kwargs):
         """
@@ -39,13 +35,25 @@ class CustomizedApp:
         :param kwargs: A dict that must contains all needed parameters i.e. client
         :return: None
         """
-        for arg in kwargs.keys():
-            print(arg + ": " + str(kwargs[arg]))
-        print(kwargs)
+        # Display the client configured by the user.
+        self.app.emit_message("Input Parameters:")
+        client = None
+        try:
+            client = kwargs.get('client')
+            self.app.emit_message("Client: " + str(client))
+        except KeyError:
+            self.app.emit_message("Unable to locate client argument.")
 
-        self.get_projects(
-            kwargs.get("client")
-        )
+        # Display the data in custom fields to the user.
+        for custom_field_name in custom_widgets.keys():
+            try:
+                field_data = kwargs.get(custom_field_name)
+                self.app.emit_message('{}: {}'.format(custom_field_name, str(field_data)))
+            except KeyError:
+                self.app.emit_message("Unable to locate argument {}.".format(custom_field_name))
+
+        if client is not None:
+            self.get_projects(client)
 
     def get_projects(self, client):
         # Create the JamaClient

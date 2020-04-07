@@ -1,4 +1,5 @@
 # Python standard libs
+import datetime
 import os
 import sys
 import threading
@@ -28,6 +29,9 @@ import app_constants as const
 STRING_FIELD_WIDGET = "STRING_FIELD_WIDGET"
 RADIO_BUTTON_FIELD_WIDGET = "RADIO_BUTTON_FIELD_WIDGET"
 DIRECTORY_CHOOSER_FIELD_WIDGET = "DIRECTORY_CHOOSER_FIELD_WIDGET"
+
+# local logger
+logger = logging.getLogger('py_jama_script_runner')
 
 
 ########################################################################################################################
@@ -97,7 +101,7 @@ class PyJamaScriptRunner(tk.Tk):
         # attempt to load existing settings.iml file
         self.default_settings_file = 'settings.ini'
 
-        # determine if application is a script file or frozen exe
+        # determine if application is a script file or frozen exe so we can find the location of the executable
         self.application_path = ""
         if getattr(sys, 'frozen', False):
             self.application_path = '/'.join(os.path.dirname(sys.argv[0]).split('/')[:-3])
@@ -106,6 +110,17 @@ class PyJamaScriptRunner(tk.Tk):
 
         config_path = os.path.join(self.application_path, self.default_settings_file)
         self.load_file(config_path)
+
+        # INIT LOGGING
+        log_dir = self.application_path
+        try:
+            log_dir = os.path.join(self.application_path, 'logs')
+            os.mkdir(log_dir)
+        except OSError:
+            pass
+        current_date_time = datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S")
+        log_file = os.path.join(log_dir, '{}.log'.format(str(current_date_time)))
+        logging.basicConfig(filename=log_file, level=logging.INFO)
 
     def save_settings(self):
         save_location = filedialog.asksaveasfilename(initialdir=self.application_path,
@@ -143,18 +158,16 @@ class PyJamaScriptRunner(tk.Tk):
         config.read(file_to_load)
 
         # Load client settings
-        self.client_panel.url_field.set_value(config.get("CLIENT", "jama_url"))
-        self.client_panel.auth_mode_field.auth_mode.set(int(config.get("CLIENT", "oauth")))
-        self.client_panel.username_field.set_value(config.get("CLIENT", "user_id"))
-        try:
-            self.client_panel.password_field.set_value(config.get("CLIENT", "secret"))
-        except configparser.NoOptionError:
-            pass
+        self.client_panel.url_field.set_value(config.get("CLIENT", "jama_url", fallback="https://"))
+        self.client_panel.auth_mode_field.auth_mode.set(int(config.get("CLIENT", "oauth", fallback="0")))
+        self.client_panel.username_field.set_value(config.get("CLIENT", "user_id", fallback=""))
+        self.client_panel.password_field.set_value(config.get("CLIENT", "secret", fallback=""))
 
         # Load custom settings
-        for option in config.options("CUSTOM_FIELDS"):
-            if option in self.custom_fields:
-                self.custom_fields.get(option).set_value(config.get("CUSTOM_FIELDS", option))
+        if "CUSTOM_FIELDS" in config:
+            for option in config.options("CUSTOM_FIELDS"):
+                if option in self.custom_fields:
+                    self.custom_fields.get(option).set_value(config.get("CUSTOM_FIELDS", option, fallback=""))
 
     def execute_button_command(self):
         """This function should start a thread to do the work of the custom script. The script can pass back messages
@@ -239,10 +252,11 @@ class PyJamaScriptRunner(tk.Tk):
 
     def emit_message(self, msg):
         self.message_queue.put(msg)
+        self.message_queue.put("\n")
+        logger.info(msg)
 
     def set_status_message(self, msg):
         self.status.set(msg)
-        self.message_queue.put("\n")
 
     def update_progress(self, progress):
         """
@@ -263,6 +277,9 @@ class ResultsPanel(tk.LabelFrame):
 
         # Add a Text widget to display results.  Set it to disabled so that the User may not interact with it.
         self.result_text = Text(self, state=tkc.DISABLED, background=colors.JAMA_HILO_SILVER)
+        # self.result_text.bind("<Key>", lambda e: "break")
+        self.result_text.bind('<Button-1>', lambda e: self.result_text.config(state=tkc.NORMAL))
+        self.result_text.bind('<ButtonRelease-1>', lambda e: self.result_text.config(state=tkc.DISABLED))
 
         # Add a scrollbar for results
         self.result_scrollbar = ttk.Scrollbar(self, orient=tkc.VERTICAL, command=self.result_text.yview)
@@ -398,7 +415,7 @@ class ClientSettingsPanel(tk.LabelFrame):
             # Read values
             url = self.url_field.value.get().strip().lower()
             # Get those pesky backslashes out
-            while url.endswith('/'):
+            while url.endswith('/') and url != 'https://' and url != 'http://':
                 url = url[0:len(url) - 1]
             # If http or https method not specified in the url then add it now.
             if not (url.startswith('https://') or url.startswith('http://')):

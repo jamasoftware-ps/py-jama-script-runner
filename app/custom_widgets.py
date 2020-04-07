@@ -87,7 +87,9 @@ class DirectoryChooserFieldWidget(StringFieldWidget):
         self.dir_chooser_button.pack(side=tkc.LEFT)
 
     def choose_file(self):
-        self.set_value(filedialog.askdirectory())
+        directory = filedialog.askdirectory()
+        if directory is not None and directory != '':
+            self.set_value(directory)
 
 
 class RadioButtonFieldWidget(FieldWidget):

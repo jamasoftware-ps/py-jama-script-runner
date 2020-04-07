@@ -5,3 +5,6 @@ build/
 dist/
 *.ini
 *.spec
+logs
+__pycache__
+app/__pycache__
